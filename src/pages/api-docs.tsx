@@ -28,31 +28,31 @@ const ApiDocs: React.FC<ApiDocsProps> = ({ spec }) => {
 
         // Initialize Swagger UI directly using its standalone bundle
         const initSwagger = async () => {
-            try {
-                // Load the SwaggerUIBundle script
-                const SwaggerUIBundle = await import("swagger-ui-dist/swagger-ui-bundle");
+            // try {
+            //     // Load the SwaggerUIBundle script
+            //     const SwaggerUIBundle = await import("swagger-ui-dist/swagger-ui-bundle");
 
-                // Clear any existing content
-                const container = document.getElementById("swagger-ui");
-                if (container) {
-                    container.innerHTML = "";
+            //     // Clear any existing content
+            //     const container = document.getElementById("swagger-ui");
+            //     if (container) {
+            //         container.innerHTML = "";
 
-                    // Initialize Swagger UI
-                    SwaggerUIBundle.default({
-                        spec: spec,
-                        dom_id: "#swagger-ui",
-                        deepLinking: true,
-                        presets: [SwaggerUIBundle.default.presets.apis, SwaggerUIBundle.default.SwaggerUIStandalonePreset],
-                        layout: "BaseLayout",
-                        supportedSubmitMethods: ["get", "post", "put", "delete", "patch"],
-                        onComplete: () => {
-                            setIsLoaded(true);
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error("Failed to load Swagger UI:", error);
-            }
+            //         // Initialize Swagger UI
+            //         SwaggerUIBundle.default({
+            //             spec: spec,
+            //             dom_id: "#swagger-ui",
+            //             deepLinking: true,
+            //             presets: [SwaggerUIBundle.default.presets.apis, SwaggerUIBundle.default.SwaggerUIStandalonePreset],
+            //             layout: "BaseLayout",
+            //             supportedSubmitMethods: ["get", "post", "put", "delete", "patch"],
+            //             onComplete: () => {
+            //                 setIsLoaded(true);
+            //             }
+            //         });
+            //     }
+            // } catch (error) {
+            //     console.error("Failed to load Swagger UI:", error);
+            // }
         };
 
         initSwagger();
