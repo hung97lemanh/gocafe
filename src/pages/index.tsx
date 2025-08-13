@@ -84,8 +84,16 @@ const App = () => {
             {/* Navbar */}
             <nav className="bg-tan p-4 shadow-md sticky top-0 z-50">
                 <div className="container mx-auto flex justify-between items-center">
-                    <div className="text-2xl font-bold text-saddleBrown cursor-pointer" onClick={() => navigateTo("/")}>
-                        Go Cafe
+                    <div className="cursor-pointer" onClick={() => navigateTo("/")}>
+                        <img 
+                            src="/image/logov1.png" 
+                            alt="Go Cafe Logo" 
+                            className="h-10"
+                            onError={(e: any) => {
+                                e.target.onerror = null;
+                                e.target.src = "https://placehold.co/200x80/D2B48C/8B4513?text=Go+Cafe";
+                            }} 
+                        />
                     </div>
                     {/* Desktop Navigation */}
                     <ul className="hidden md:flex space-x-6">
