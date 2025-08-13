@@ -206,7 +206,7 @@ const HomePage = () => (
         {/* Hero Image */}
         <div className="mb-12 rounded-xl overflow-hidden shadow-xl transform hover:scale-105 transition-transform duration-500">
             <img
-                src="https://placehold.co/1200x600/D2B48C/6F4E37?text=Kh%C3%B4ng+Gian+Qu%C3%A1n+Cafe+M%E1%BB%99c"
+                src="/image/bannerv2.png"
                 alt="Không gian quán cafe ấm cúng"
                 className="w-full h-auto object-cover"
                 onError={(e: any) => {
@@ -389,14 +389,14 @@ const AboutPage = () => (
 // Gallery Page Component
 const GalleryPage = () => {
     const images = [
-        "https://placehold.co/600x400/D2B48C/6F4E37?text=G%C3%B3c+qu%C3%A1n+th%C6%B0+gi%C3%A3n",
-        "https://placehold.co/600x400/A0522D/F5DEB3?text=B%C3%A0n+gh%E1%BA%BF+g%E1%BB%97+Vintage",
-        "https://placehold.co/600x400/6F4E37/F5DEB3?text=Khu+v%C6%B0%E1%BB%9Dn+nh%E1%BB%8F+xanh+m%C3%A1t",
-        "https://placehold.co/600x400/8B4513/F5DEB3?text=C%C3%A0+ph%C3%AA+ngh%E1%BB%87+thu%E1%BA%ADt",
-        "https://placehold.co/600x400/F5DEB3/6F4E37?text=B%C3%A1nh+ng%E1%BB%8Dt+tuy%E1%BB%87t+h%E1%BA%A3o",
-        "https://placehold.co/600x400/6F4E37/D2B48C?text=Kh%C3%B4ng+gian+l%C3%A3ng+m%E1%BA%A1n",
-        "https://placehold.co/600x400/A0522D/D2B48C?text=S%E1%BB%B1+ki%E1%BB%87n+ch%C3%B9m+h%E1%BB%8D+b%E1%BA%A1n+b%C3%A8",
-        "https://placehold.co/600x400/8B4513/D2B48C?text=C%C3%A1c+lo%E1%BA%A1i+tr%C3%A0+th%C6%A1m+ngon"
+        "/image/sanvuon1.jpg",
+        "/image/sanvuon2.jpg",
+        "/image/sanvuon3.jpg",
+        "/image/sanvuon4.jpg",
+        "/image/sanvuon5.jpg",
+        "/image/sanvuon6.jpg",
+        "/image/sanvuon7.jpg",
+        "/image/sanvuon8.jpg"
     ];
 
     return (
@@ -408,7 +408,7 @@ const GalleryPage = () => {
                         <img
                             src={src}
                             alt={`Ảnh quán cafe ${index + 1}`}
-                            className="w-full h-64 object-cover"
+                            className="w-full h-80 object-cover"
                             onError={(e: any) => {
                                 e.target.onerror = null;
                                 e.target.src = "https://placehold.co/600x400/D2B48C/6F4E37?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh";
