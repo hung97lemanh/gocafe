@@ -1,12 +1,15 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+import { withAuth } from "../../lib/withAuth";
 
-export default function AdminIndex() {
+function AdminIndex() {
     const router = useRouter();
 
     useEffect(() => {
         router.replace("/admin/orders");
     }, [router]);
 
-    return null; // hoặc có thể trả về spinner nếu muốn
+    return null;
 }
+
+export default withAuth(AdminIndex);

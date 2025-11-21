@@ -13,44 +13,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int    @id @default(autoincrement())
-  name  String
-  email String @unique
-}
-
 model Category {
   id        Int      @id @default(autoincrement())
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  foods     Food[]   // 1-n với món ăn
+  foods Food[] // 1-n với món ăn
 }
 
 model Food {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   name        String
   description String?
   price       Int
   imageUrl    String?
   status      FoodStatus @default(AVAILABLE)
   categoryId  Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  category    Category @relation(fields: [categoryId], references: [id])
+  category     Category      @relation(fields: [categoryId], references: [id])
   foodToppings FoodTopping[] // n-n với Topping
 
   OrderItem OrderItem[]
 }
 
 model Topping {
-  id          Int      @id @default(autoincrement())
-  name        String
-  price       Int      // Giá thêm topping
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Int // Giá thêm topping
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   foodToppings FoodTopping[] // n-n với Food
 
@@ -59,12 +53,12 @@ model Topping {
 
 // Bảng phụ n-n: Food <-> Topping
 model FoodTopping {
-  id        Int     @id @default(autoincrement())
+  id        Int @id @default(autoincrement())
   foodId    Int
   toppingId Int
 
-  food      Food    @relation(fields: [foodId], references: [id])
-  topping   Topping @relation(fields: [toppingId], references: [id])
+  food    Food    @relation(fields: [foodId], references: [id])
+  topping Topping @relation(fields: [toppingId], references: [id])
 
   @@unique([foodId, toppingId])
 }
@@ -76,45 +70,45 @@ enum FoodStatus {
 }
 
 model Table {
-  id         Int      @id @default(autoincrement())
-  name       String   // Tên bàn, ví dụ "Bàn 1"
-  qrCodeUrl  String   // Đường dẫn ảnh QR hoặc link QR cho bàn
-  status     TableStatus @default(FREE)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int         @id @default(autoincrement())
+  name      String // Tên bàn, ví dụ "Bàn 1"
+  qrCodeUrl String // Đường dẫn ảnh QR hoặc link QR cho bàn
+  status    TableStatus @default(FREE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
-  orders     Order[]  // 1-n với Order
+  orders Order[] // 1-n với Order
 }
 
 enum TableStatus {
-  FREE           // Bàn trống, chưa có khách
-  OCCUPIED       // Bàn đang có khách ngồi (đã đặt món, chưa thanh toán)
-  RESERVED       // Đặt trước (nếu cần)
-  CLEANING       // Đang dọn bàn
+  FREE // Bàn trống, chưa có khách
+  OCCUPIED // Bàn đang có khách ngồi (đã đặt món, chưa thanh toán)
+  RESERVED // Đặt trước (nếu cần)
+  CLEANING // Đang dọn bàn
 }
 
 model Order {
-  id         Int      @id @default(autoincrement())
-  tableId    Int
-  customerId Int?     // Nếu cần lưu khách hàng (device_id, tên, ...), có thể null
-  status     OrderStatus @default(PENDING)
-  totalAmount Int
+  id            Int            @id @default(autoincrement())
+  tableId       Int
+  customerId    Int? // Nếu cần lưu khách hàng (device_id, tên, ...), có thể null
+  status        OrderStatus    @default(PENDING)
+  totalAmount   Int
   paymentMethod PaymentMethod?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  table      Table    @relation(fields: [tableId], references: [id])
-  customer   Customer? @relation(fields: [customerId], references: [id])
+  table      Table       @relation(fields: [tableId], references: [id])
+  customer   Customer?   @relation(fields: [customerId], references: [id])
   orderItems OrderItem[]
 }
 
 enum OrderStatus {
-  PENDING        // Đơn vừa tạo, đang chờ pha chế
-  IN_PROGRESS    // Một số món đang được pha chế
-  READY          // Đã pha xong toàn bộ món
-  SERVED         // Đã phục vụ
-  PAID           // Đã thanh toán
-  CANCELLED      // Đã hủy
+  PENDING // Đơn vừa tạo, đang chờ pha chế
+  IN_PROGRESS // Một số món đang được pha chế
+  READY // Đã pha xong toàn bộ món
+  SERVED // Đã phục vụ
+  PAID // Đã thanh toán
+  CANCELLED // Đã hủy
 }
 
 enum PaymentMethod {
@@ -123,47 +117,99 @@ enum PaymentMethod {
 }
 
 model Customer {
-  id        Int      @id @default(autoincrement())
-  deviceId  String   @unique
-  name      String?
-  createdAt DateTime @default(now())
+  id            Int       @id @default(autoincrement())
+  deviceId      String    @unique
+  name          String?
+  createdAt     DateTime  @default(now())
   lastOrderTime DateTime?
-  orders    Order[]
+  orders        Order[]
 }
 
 model OrderItem {
-  id         Int      @id @default(autoincrement())
-  orderId    Int
-  foodId     Int
-  quantity   Int
-  note       String?      // Ghi chú món: ít đường, nhiều đá,...
-  status     OrderItemStatus @default(PENDING)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int             @id @default(autoincrement())
+  orderId   Int
+  foodId    Int
+  quantity  Int
+  note      String? // Ghi chú món: ít đường, nhiều đá,...
+  status    OrderItemStatus @default(PENDING)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
-  order      Order    @relation(fields: [orderId], references: [id])
-  food       Food     @relation(fields: [foodId], references: [id])
-  toppings   OrderItemTopping[]
+  order    Order              @relation(fields: [orderId], references: [id])
+  food     Food               @relation(fields: [foodId], references: [id])
+  toppings OrderItemTopping[]
 }
 
 enum OrderItemStatus {
-  PENDING      // Chưa pha
-  IN_PROGRESS  // Đang pha chế
-  DONE         // Đã pha xong
-  SERVED       // Đã phục vụ
-  CANCELLED    // Bị hủy
+  PENDING // Chưa pha
+  IN_PROGRESS // Đang pha chế
+  DONE // Đã pha xong
+  SERVED // Đã phục vụ
+  CANCELLED // Bị hủy
 }
 
 // Bảng lưu topping từng món order
 model OrderItemTopping {
-  id         Int      @id @default(autoincrement())
+  id          Int @id @default(autoincrement())
   orderItemId Int
   toppingId   Int
 
-  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
-  topping     Topping   @relation(fields: [toppingId], references: [id])
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
+  topping   Topping   @relation(fields: [toppingId], references: [id])
 
   @@unique([orderItemId, toppingId])
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+  oauth_token_secret String?
+  oauth_token        String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  // custom: store hashed password for Credentials provider
+  password String?
+
+  accounts Account[]
+  sessions Session[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 // ... Food, Topping, Category như đã thiết kế ở trên

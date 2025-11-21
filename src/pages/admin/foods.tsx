@@ -3,6 +3,7 @@ import AdminLayout from "../../components/AdminLayout";
 import axios from "axios";
 import useSWR, { mutate } from "swr";
 import Image from "next/image";
+import { withAuth } from "../../lib/withAuth";
 
 // Type interfaces for API data
 interface Category {
@@ -50,7 +51,7 @@ interface NewFoodForm {
 // SWR fetcher function
 const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
-export default function FoodsPage() {
+function FoodsPage() {
     // Fetch data using SWR
     const { data: foods, error: foodsError, isLoading: foodsLoading } = useSWR<Food[]>("/api/foods", fetcher);
     const { data: categories, error: categoriesError } = useSWR<Category[]>("/api/categories", fetcher);
@@ -311,7 +312,7 @@ export default function FoodsPage() {
                         <div className="text-sm text-gray-500">Hết hàng</div>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow text-center">
-                        <div className="text-xl font-bold text-amber-600">{foods?.filter((d: any    ) => d.status === "HIDDEN").length || 0}</div>
+                        <div className="text-xl font-bold text-amber-600">{foods?.filter((d: any) => d.status === "HIDDEN").length || 0}</div>
                         <div className="text-sm text-gray-500">Ẩn</div>
                     </div>
                 </div>
@@ -684,3 +685,5 @@ export default function FoodsPage() {
         </AdminLayout>
     );
 }
+
+export default withAuth(FoodsPage);

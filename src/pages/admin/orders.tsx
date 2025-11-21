@@ -2,8 +2,9 @@ import AdminLayout from "../../components/AdminLayout";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { withAuth } from "../../lib/withAuth";
 
-export default function OrdersPage() {
+function OrdersPage() {
     const [filterValue, setFilterValue] = useState("all");
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -289,3 +290,4 @@ export default function OrdersPage() {
         </AdminLayout>
     );
 }
+export default withAuth(OrdersPage);

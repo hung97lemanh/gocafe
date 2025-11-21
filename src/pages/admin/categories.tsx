@@ -1,5 +1,6 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import AdminLayout from "../../components/AdminLayout";
+import { withAuth } from "../../lib/withAuth";
 
 // Define the Category interface
 interface Category {
@@ -15,7 +16,7 @@ interface CategoryForm {
     name: string;
 }
 
-export default function CategoriesPage() {
+function CategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
@@ -336,3 +337,5 @@ export default function CategoriesPage() {
         </AdminLayout>
     );
 }
+
+export default withAuth(CategoriesPage);

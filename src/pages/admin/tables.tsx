@@ -2,6 +2,7 @@ import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import AdminLayout from "../../components/AdminLayout";
 import { TableStatus } from "@prisma/client";
 import { useQRCode } from "next-qrcode";
+import { withAuth } from "../../lib/withAuth";
 
 // Define the Table interface
 interface Table {
@@ -18,7 +19,7 @@ interface TableForm {
     name: string;
     status: TableStatus;
 }
-export default function TablesPage() {
+function TablesPage() {
     const { Canvas } = useQRCode();
     const [tables, setTables] = useState<Table[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -575,3 +576,5 @@ export default function TablesPage() {
         </AdminLayout>
     );
 }
+
+export default withAuth(TablesPage);

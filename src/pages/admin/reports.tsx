@@ -1,6 +1,7 @@
 import AdminLayout from "../../components/AdminLayout";
+import { withAuth } from "../../lib/withAuth";
 
-export default function ReportsPage() {
+function ReportsPage() {
     return (
         <AdminLayout>
             <h1 className="text-2xl font-bold mb-4">Báo cáo</h1>
@@ -8,3 +9,5 @@ export default function ReportsPage() {
         </AdminLayout>
     );
 }
+
+export default withAuth(ReportsPage);

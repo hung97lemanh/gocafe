@@ -1,6 +1,7 @@
 import AdminLayout from "../../components/AdminLayout";
+import { withAuth } from "../../lib/withAuth";
 
-export default function SystemSettingsPage() {
+function SystemSettingsPage() {
     return (
         <AdminLayout>
             <h1 className="text-2xl font-bold mb-4">Cấu hình hệ thống</h1>
@@ -8,3 +9,5 @@ export default function SystemSettingsPage() {
         </AdminLayout>
     );
 }
+
+export default withAuth(SystemSettingsPage);

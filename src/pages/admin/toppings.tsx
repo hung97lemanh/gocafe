@@ -1,5 +1,6 @@
 import { useState, useEffect, ChangeEvent, FormEvent, FocusEvent } from "react";
 import AdminLayout from "../../components/AdminLayout";
+import { withAuth } from "../../lib/withAuth";
 
 // Define the Topping interface
 interface Topping {
@@ -16,7 +17,7 @@ interface ToppingForm {
     price: string;
 }
 
-export default function ToppingsPage() {
+function ToppingsPage() {
     const [toppings, setToppings] = useState<Topping[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
@@ -389,3 +390,5 @@ export default function ToppingsPage() {
         </AdminLayout>
     );
 }
+
+export default withAuth(ToppingsPage);
