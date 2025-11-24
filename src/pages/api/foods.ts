@@ -10,7 +10,8 @@ import { NextApiRequestWithFile } from "../../types/api";
 const upload = multer({
     storage: multer.diskStorage({
         destination: (req, file, cb) => {
-            const uploadDir = path.join(process.cwd(), "public/image/food");
+            // Sử dụng UPLOAD_DIR từ environment variable
+            const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), "public/image/food");
 
             // Create directory if it doesn't exist
             if (!fs.existsSync(uploadDir)) {
@@ -26,7 +27,6 @@ const upload = multer({
             cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
         }
     }),
-    // Only allow image files
     fileFilter: (req, file, cb) => {
         const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
         if (allowedTypes.includes(file.mimetype)) {
@@ -108,16 +108,13 @@ async function getFoods(req: NextApiRequest, res: NextApiResponse) {
 
 // Create a new food with category, toppings, and image
 async function createFood(req: NextApiRequestWithFile, res: NextApiResponse) {
-    // Get form data from the request body
     const { name, description, price, status, categoryId } = req.body;
     const toppingIds = req.body.toppingIds ? (Array.isArray(req.body.toppingIds) ? req.body.toppingIds : [req.body.toppingIds]) : [];
 
-    // Validate required fields
     if (!name || !price || !categoryId) {
         return res.status(400).json({ message: "Name, price, and category are required" });
     }
 
-    // Check if category exists
     const category = await prisma.category.findUnique({
         where: { id: Number(categoryId) }
     });
@@ -129,8 +126,9 @@ async function createFood(req: NextApiRequestWithFile, res: NextApiResponse) {
     // Process image file if uploaded
     let imageUrl = null;
     if (req.file) {
-        // Create relative URL for the image
-        imageUrl = `/image/food/${req.file.filename}`;
+        // Sử dụng BASE_URL từ environment
+        const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || "/image/food";
+        imageUrl = `${baseUrl}/${req.file.filename}`;
     }
 
     // Create food with toppings in a transaction
@@ -197,8 +195,10 @@ async function deleteExistingImage(imageUrl: string | null) {
     if (!imageUrl) return;
 
     try {
-        // Convert URL to file path
-        const filePath = path.join(process.cwd(), "public", imageUrl);
+        // Extract filename from URL
+        const filename = path.basename(imageUrl);
+        const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), "public/image/food");
+        const filePath = path.join(uploadDir, filename);
 
         // Check if file exists before attempting to delete
         if (fs.existsSync(filePath)) {
@@ -207,7 +207,6 @@ async function deleteExistingImage(imageUrl: string | null) {
         }
     } catch (error) {
         console.error("Error deleting old image:", error);
-        // Continue execution even if image deletion fails
     }
 }
 
@@ -215,15 +214,12 @@ async function deleteExistingImage(imageUrl: string | null) {
 async function updateFood(req: NextApiRequestWithFile, res: NextApiResponse) {
     const { id } = req.query;
     const { name, description, price, status, categoryId } = req.body;
-
-    // Parse toppingIds (handle both array and single value)
     const toppingIds = req.body.toppingIds ? (Array.isArray(req.body.toppingIds) ? req.body.toppingIds : [req.body.toppingIds]) : undefined;
 
     if (!id || isNaN(Number(id))) {
         return res.status(400).json({ message: "Valid food ID is required" });
     }
 
-    // Check if food exists
     const existingFood = await prisma.food.findUnique({
         where: { id: Number(id) }
     });
@@ -238,8 +234,9 @@ async function updateFood(req: NextApiRequestWithFile, res: NextApiResponse) {
         // Delete existing image if there is one
         await deleteExistingImage(existingFood.imageUrl);
 
-        // Create relative URL for the new image
-        imageUrl = `/image/food/${req.file.filename}`;
+        // Create URL for the new image
+        const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || "/image/food";
+        imageUrl = `${baseUrl}/${req.file.filename}`;
     }
 
     // Update food and its relationships in a transaction
