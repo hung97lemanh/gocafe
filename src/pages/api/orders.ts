@@ -35,7 +35,13 @@ async function getOrders(req: NextApiRequest, res: NextApiResponse) {
     }
 
     const orders = await prisma.order.findMany({
-        where,
+        where: {
+            ...where,
+            createdAt: {
+                gte: new Date(new Date().setHours(0, 0, 0, 0)),
+                lte: new Date(new Date().setHours(23, 59, 59, 999))
+            }
+        },
         include: {
             table: true,
             customer: true,

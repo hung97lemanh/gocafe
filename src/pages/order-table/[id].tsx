@@ -51,7 +51,7 @@ export async function getServerSideProps(context: any) {
         const categories = await prisma.category.findMany({
             include: {
                 foods: {
-                    where: { status: "AVAILABLE" },
+                    where: { status: "AVAILABLE", isDeleted: false },
                     orderBy: { name: "asc" }
                 }
             }

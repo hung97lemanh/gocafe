@@ -1,12 +1,16 @@
 import AdminLayout from "../../components/AdminLayout";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { withAuth } from "../../lib/withAuth";
 
+// Types
+type ConnectionStatus = "connected" | "disconnected" | "paused";
+
 function OrdersPage() {
     const [filterValue, setFilterValue] = useState("all");
     const [orders, setOrders] = useState([]);
+    const [allOrders, setAllOrders] = useState([]); // Store ALL orders for stats
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState([
         { number: 0, label: "Đơn chờ" },
@@ -15,54 +19,238 @@ function OrdersPage() {
         { number: "0", label: "Doanh thu" }
     ]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connected");
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
+    // Refs cho polling system
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const isPollingRef = useRef(false); // Prevent concurrent requests
+    const errorCountRef = useRef(0); // Track consecutive errors
+    const currentIntervalRef = useRef(8000); // Current polling interval
+    const lastOrderCountRef = useRef(0); // Track order count for new order detection
+    const audioRef = useRef<HTMLAudioElement | null>(null); // Audio for notifications
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Initialize audio
     useEffect(() => {
-        fetchOrders();
-    }, [filterValue]);
+        // Tạo audio element cho notification sound (có thể thay bằng file âm thanh thực tế)
+        audioRef.current = new Audio("/codonhangmoi.mp3");
+    }, []);
 
-    const fetchOrders = async () => {
+    // Hàm tính stats từ data có sẵn (KHÔNG gọi API)
+    const calculateStatsFromData = useCallback((ordersData: any[]) => {
+        const pendingCount = ordersData.filter((order: any) => ["pending", "in_progress", "ready"].includes(order.status)).length;
+
+        const paidCount = ordersData.filter((order: any) => order.status === "paid").length;
+
+        const doneCount = ordersData.filter((order: any) => order.status === "served").length;
+
+        const revenue = ordersData
+            .filter((order: any) => ["paid", "served"].includes(order.status))
+            .reduce((sum: any, order: any) => sum + (order.totalAmount || 0), 0);
+
+        setStats([
+            { number: pendingCount, label: "Đơn chờ" },
+            { number: paidCount, label: "Đã thanh toán" },
+            { number: doneCount, label: "Hoàn thành" },
+            { number: formatCurrency(revenue), label: "Doanh thu" }
+        ]);
+    }, []);
+
+    // Hàm fetch orders (có loading spinner) - CHỈ dùng khi mount
+    const fetchOrders = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`/api/orders?status=${filterValue}`);
-            setOrders(response.data);
+            // Fetch TẤT CẢ orders để tính stats
+            const allResponse = await axios.get(`/api/orders?status=all`);
+            const allOrdersData = allResponse.data;
 
-            // Update stats
-            calculateStats();
+            setAllOrders(allOrdersData);
+            lastOrderCountRef.current = allOrdersData.length;
+
+            // Filter orders theo filterValue
+            if (filterValue === "all") {
+                setOrders(allOrdersData);
+            } else {
+                const filtered = allOrdersData.filter((order: any) => order.status === filterValue.toLowerCase());
+                setOrders(filtered);
+            }
+
+            // Tính stats từ ALL orders
+            calculateStatsFromData(allOrdersData);
         } catch (error) {
             console.error("Error fetching orders:", error);
             toast.error("Không thể tải danh sách đơn hàng");
         } finally {
             setLoading(false);
         }
-    };
+    }, [filterValue, calculateStatsFromData]);
 
-    const calculateStats = async () => {
-        try {
-            // Get all orders for stats
-            const response = await axios.get("/api/orders");
-            const allOrders = response.data;
-
-            const pendingCount = allOrders.filter((order: any) => ["pending", "in_progress", "ready"].includes(order.status)).length;
-
-            const paidCount = allOrders.filter((order: any) => order.status === "paid").length;
-
-            const doneCount = allOrders.filter((order: any) => order.status === "served").length;
-
-            // Calculate revenue from paid and served orders
-            const revenue = allOrders
-                .filter((order: any) => ["paid", "served"].includes(order.status))
-                .reduce((sum: any, order: any) => sum + (order.totalAmount || 0), 0);
-
-            setStats([
-                { number: pendingCount, label: "Đơn chờ" },
-                { number: paidCount, label: "Đã thanh toán" },
-                { number: doneCount, label: "Hoàn thành" },
-                { number: formatCurrency(revenue), label: "Doanh thu" }
-            ]);
-        } catch (error) {
-            console.error("Error calculating stats:", error);
+    // Hàm fetch orders silently (không có loading spinner) - dùng cho polling
+    const fetchOrdersSilently = useCallback(async () => {
+        // Prevent concurrent requests
+        if (isPollingRef.current) {
+            console.log("🔄 Skipping fetch - request already in progress");
+            return;
         }
-    };
+
+        isPollingRef.current = true;
+
+        try {
+            // CHỈ fetch TẤT CẢ orders MỘT LẦN
+            const allResponse = await axios.get(`/api/orders?status=all`);
+            const newAllOrders = allResponse.data;
+
+            // So sánh data cũ/mới bằng length và stringify
+            const hasChanges = JSON.stringify(allOrders) !== JSON.stringify(newAllOrders);
+
+            if (hasChanges) {
+                console.log("📊 Data changed, updating state...");
+
+                // Kiểm tra có đơn hàng mới không
+                const hasNewOrder = newAllOrders.length > lastOrderCountRef.current;
+
+                setAllOrders(newAllOrders);
+
+                // Filter orders theo filterValue
+                if (filterValue === "all") {
+                    setOrders(newAllOrders);
+                } else {
+                    const filtered = newAllOrders.filter((order: any) => order.status === filterValue.toLowerCase());
+                    setOrders(filtered);
+                }
+
+                // Tính stats từ ALL orders
+                calculateStatsFromData(newAllOrders);
+
+                // Notification cho đơn hàng mới
+                if (hasNewOrder && lastOrderCountRef.current > 0) {
+                    toast.success("🔔 Có đơn hàng mới!", {
+                        duration: 3000,
+                        position: "top-center"
+                    });
+
+                    // Phát âm thanh thông báo
+                    if (audioRef.current) {
+                        audioRef.current.play().catch((err) => console.log("Audio play failed:", err));
+                    }
+                }
+
+                lastOrderCountRef.current = newAllOrders.length;
+            } else {
+                console.log("✓ No changes detected");
+            }
+
+            // Reset error count khi request thành công
+            if (errorCountRef.current > 0) {
+                errorCountRef.current = 0;
+                currentIntervalRef.current = 8000;
+                setConnectionStatus("connected");
+                console.log("✅ Connection restored - Reset interval to 8s");
+
+                // Restart polling với interval mới
+                startPolling();
+            }
+        } catch (error) {
+            console.error("Error in silent fetch:", error);
+
+            // Exponential backoff
+            errorCountRef.current++;
+
+            // Tính toán interval mới
+            if (errorCountRef.current === 1) {
+                currentIntervalRef.current = 16000; // 16s
+            } else if (errorCountRef.current === 2) {
+                currentIntervalRef.current = 32000; // 32s
+            } else {
+                currentIntervalRef.current = 60000; // 60s (max)
+            }
+
+            setConnectionStatus("disconnected");
+            console.log(`❌ Error ${errorCountRef.current} - New interval: ${currentIntervalRef.current}ms`);
+
+            // Chỉ hiện toast sau 3 lỗi liên tiếp
+            if (errorCountRef.current >= 3) {
+                toast.error("⚠️ Mất kết nối với server", {
+                    duration: 2000
+                });
+            }
+
+            // Restart polling với interval mới
+            startPolling();
+        } finally {
+            isPollingRef.current = false;
+        }
+    }, [filterValue, allOrders, calculateStatsFromData]);
+
+    // Hàm start polling - REMOVE fetchOrdersSilently từ dependencies
+    const startPolling = useCallback(() => {
+        // Clear existing interval
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
+
+        // Start new interval với current interval
+        pollingIntervalRef.current = setInterval(() => {
+            // Gọi fetchOrdersSilently trực tiếp
+            if (!isPollingRef.current) {
+                fetchOrdersSilently();
+            }
+        }, currentIntervalRef.current);
+
+        console.log(`🔄 Polling started with interval: ${currentIntervalRef.current}ms`);
+    }, []); // EMPTY dependencies để tránh re-create
+
+    // Hàm stop polling
+    const stopPolling = useCallback(() => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+            console.log("⏸️ Polling stopped");
+        }
+    }, []);
+
+    // Handle visibility change - FIX dependencies
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                stopPolling();
+                setConnectionStatus("paused");
+                console.log("👁️ Tab hidden - Polling paused");
+            } else {
+                setConnectionStatus("connected");
+                startPolling();
+                // Fetch ngay khi tab visible trở lại
+                if (!isPollingRef.current) {
+                    fetchOrdersSilently();
+                }
+                console.log("👁️ Tab visible - Polling resumed");
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, []); // EMPTY dependencies
+
+    // Initial fetch và start polling - FIX dependencies
+    useEffect(() => {
+        fetchOrders();
+
+        // Delay polling để tránh conflict với initial fetch
+        const timeoutId = setTimeout(() => {
+            startPolling();
+        }, 1000);
+
+        // Cleanup khi unmount hoặc filterValue thay đổi
+        return () => {
+            clearTimeout(timeoutId);
+            stopPolling();
+        };
+    }, [filterValue]); // CHỈ phụ thuộc filterValue
 
     const formatCurrency = (amount: any) => {
         if (amount >= 1000000) {
@@ -73,6 +261,25 @@ function OrdersPage() {
         return amount.toString();
     };
 
+    // Manual refresh handler - đơn giản hóa
+    const handleManualRefresh = async () => {
+        if (isRefreshing || isPollingRef.current) {
+            console.log("⏭️ Skipping manual refresh - already refreshing");
+            return;
+        }
+
+        setIsRefreshing(true);
+        await fetchOrdersSilently();
+        setIsRefreshing(false);
+
+        // Reset polling timer
+        stopPolling();
+        setTimeout(() => startPolling(), 100);
+
+        toast.success("🔄 Đã làm mới!", { duration: 1500 });
+    };
+
+    // Debounced action handler - đơn giản hóa
     const handleOrderAction = async (orderId: any, action: any) => {
         try {
             let status, message;
@@ -104,23 +311,49 @@ function OrdersPage() {
             });
 
             toast.success(message);
-            fetchOrders();
+
+            // Fetch ngay lập tức
+            if (!isPollingRef.current) {
+                await fetchOrdersSilently();
+            }
+
+            // Reset polling timer
+            stopPolling();
+            setTimeout(() => startPolling(), 100);
         } catch (error) {
             console.error(`Error updating order ${orderId}:`, error);
             toast.error("Không thể cập nhật trạng thái đơn hàng");
         }
     };
 
+    // Debounced item action handler - đơn giản hóa
     const handleItemAction = async (itemId: any, status: any) => {
         try {
             await axios.patch(`/api/order-items/${itemId}`, { status });
             toast.success("Cập nhật trạng thái món thành công");
-            fetchOrders();
+
+            // Fetch ngay lập tức
+            if (!isPollingRef.current) {
+                await fetchOrdersSilently();
+            }
+
+            // Reset polling timer
+            stopPolling();
+            setTimeout(() => startPolling(), 100);
         } catch (error) {
             console.error(`Error updating item ${itemId}:`, error);
             toast.error("Không thể cập nhật trạng thái món");
         }
     };
+
+    // Cleanup debounce timer
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
 
     const getStatusClass = (status: any) => {
         switch (status) {
@@ -141,6 +374,36 @@ function OrdersPage() {
         }
     };
 
+    // Connection status badge component
+    const ConnectionBadge = () => {
+        const statusConfig = {
+            connected: {
+                icon: "🟢",
+                text: "Đang kết nối",
+                className: "bg-green-100 text-green-700"
+            },
+            disconnected: {
+                icon: "🔴",
+                text: "Mất kết nối",
+                className: "bg-red-100 text-red-700"
+            },
+            paused: {
+                icon: "⏸️",
+                text: "Tạm dừng",
+                className: "bg-yellow-100 text-yellow-700"
+            }
+        };
+
+        const config = statusConfig[connectionStatus];
+
+        return (
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
+                <span>{config.icon}</span>
+                <span>{config.text}</span>
+            </div>
+        );
+    };
+
     const filteredOrders = orders.filter((order: any) => {
         if (!searchQuery) return true;
 
@@ -153,6 +416,19 @@ function OrdersPage() {
             <div className="pb-20">
                 <div className="flex justify-between items-center bg-gradient-to-r from-amber-700 to-amber-500 text-white p-4 rounded-lg shadow">
                     <h1 className="text-xl font-bold">🏪 Quản lý đơn hàng</h1>
+
+                    {/* Connection status và refresh button */}
+                    <div className="flex items-center gap-2">
+                        <ConnectionBadge />
+                        <button
+                            onClick={handleManualRefresh}
+                            disabled={isRefreshing}
+                            className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors disabled:opacity-50"
+                            title="Làm mới"
+                        >
+                            <span className={`text-lg ${isRefreshing ? "animate-spin inline-block" : ""}`}>🔄</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Statistics */}
@@ -166,7 +442,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Search and Filter */}
-                <div className="bg-white p-4 rounded-lg shadow mb-4">
+                {/* <div className="bg-white p-4 rounded-lg shadow mb-4">
                     <div className="flex flex-col md:flex-row gap-2">
                         <input
                             type="text"
@@ -188,7 +464,7 @@ function OrdersPage() {
                             <option value="SERVED">Đã phục vụ</option>
                         </select>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Order Items */}
                 {loading ? (
