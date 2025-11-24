@@ -93,6 +93,9 @@ export default async function handler(req: NextApiRequestWithFile, res: NextApiR
 // Get all foods with their categories and toppings
 async function getFoods(req: NextApiRequest, res: NextApiResponse) {
     const foods = await prisma.food.findMany({
+        where: {
+            isDeleted: false
+        },
         include: {
             category: true,
             foodToppings: {
@@ -293,38 +296,30 @@ async function updateFood(req: NextApiRequestWithFile, res: NextApiResponse) {
     return res.status(200).json(updatedFood);
 }
 
-// Delete a food
+// Delete a food (soft delete)
 async function deleteFood(req: NextApiRequest, res: NextApiResponse) {
-    const { id } = req.query;
+    const { id: fId } = req.query;
 
-    if (!id || isNaN(Number(id))) {
+    if (!fId || isNaN(Number(fId))) {
         return res.status(400).json({ message: "Valid food ID is required" });
     }
 
-    // Get the food to access the image URL
+    // Get the food to check if it exists
     const food = await prisma.food.findUnique({
-        where: { id: Number(id) }
+        where: { id: Number(fId) }
     });
 
     if (!food) {
         return res.status(404).json({ message: "Food not found" });
     }
 
-    // Delete in a transaction to ensure proper cleanup
-    await prisma.$transaction(async (tx) => {
-        // First delete related food-topping relationships
-        await tx.foodTopping.deleteMany({
-            where: { foodId: Number(id) }
-        });
-
-        // Then delete the food
-        await tx.food.delete({
-            where: { id: Number(id) }
-        });
+    // Soft delete by setting isDeleted to true
+    await prisma.food.update({
+        where: { id: Number(fId) },
+        data: {
+            isDeleted: true
+        }
     });
-
-    // Delete the image file if exists
-    await deleteExistingImage(food.imageUrl);
 
     return res.status(200).json({ message: "Food deleted successfully" });
 }

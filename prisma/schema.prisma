@@ -37,6 +37,7 @@ model Food {
   foodToppings FoodTopping[] // n-n với Topping
 
   OrderItem OrderItem[]
+  isDeleted Boolean @default(false)
 }
 
 model Topping {
