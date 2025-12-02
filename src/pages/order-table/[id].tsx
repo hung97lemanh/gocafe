@@ -288,8 +288,8 @@ export default function TableOrderPage({ table, categories, toppings, error }: T
                             {category.foods.map((food: any) => (
                                 <div key={food.id} className="flex items-center border-b border-gray-100 p-4 hover:bg-amber-50 rounded-lg transition">
                                     {food.imageUrl && (
-                                        <div className="mr-4 w-16 h-16 relative rounded-lg overflow-hidden shadow-md">
-                                            <Image src={food.imageUrl} alt={food.name} fill className="object-cover" />
+                                        <div className="w-16 h-16 rounded overflow-hidden flex-shrink-0">
+                                            <img src={food.imageUrl} alt={food.name} className="w-full h-full object-cover" />
                                         </div>
                                     )}
                                     <div className="flex-1">
@@ -456,7 +456,7 @@ export default function TableOrderPage({ table, categories, toppings, error }: T
 
                         {selectedFood.imageUrl && (
                             <div className="w-full h-48 relative rounded-lg overflow-hidden shadow-md mb-4">
-                                <Image src={selectedFood.imageUrl} alt={selectedFood.name} fill className="object-cover" />
+                                <img src={selectedFood.imageUrl} alt={selectedFood.name} className="w-full h-full object-cover" />
                             </div>
                         )}
 
