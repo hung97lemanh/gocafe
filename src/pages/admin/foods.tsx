@@ -62,6 +62,7 @@ function FoodsPage() {
     const [currentFoodId, setCurrentFoodId] = useState<number | null>(null);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
     const [showToast, setShowToast] = useState<boolean>(false);
     const [toastMessage, setToastMessage] = useState<string>("");
 
@@ -256,12 +257,24 @@ function FoodsPage() {
         }
     };
 
+    // Toggle category selection
+    const toggleCategory = (categoryId: number): void => {
+        setSelectedCategories((prev) => {
+            if (prev.includes(categoryId)) {
+                return prev.filter((id) => id !== categoryId);
+            } else {
+                return [...prev, categoryId];
+            }
+        });
+    };
+
     // Filtering foods based on search and status
     const filteredFoods =
         foods?.filter((food: any) => {
             const matchesSearch = food.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesStatus = statusFilter === "all" || food.status === statusFilter;
-            return matchesSearch && matchesStatus;
+            const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(food.categoryId);
+            return matchesSearch && matchesStatus && matchesCategory;
         }) || [];
 
     // Format price to VND
@@ -319,24 +332,65 @@ function FoodsPage() {
 
                 {/* Search and Filter */}
                 <div className="bg-white p-4 rounded-lg shadow">
-                    <div className="flex flex-col md:flex-row gap-3">
-                        <input
-                            type="text"
-                            placeholder="🔍 Tìm kiếm món..."
-                            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-800"
-                            value={searchTerm}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                        />
-                        <select
-                            className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:w-40 text-gray-800"
-                            value={statusFilter}
-                            onChange={(e: ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="all">Tất cả</option>
-                            <option value="AVAILABLE">Còn hàng</option>
-                            <option value="OUT_OF_STOCK">Hết hàng</option>
-                            <option value="HIDDEN">Ẩn</option>
-                        </select>
+                    <div className="flex flex-col gap-3">
+                        <div className="flex flex-col md:flex-row gap-3">
+                            <input
+                                type="text"
+                                placeholder="🔍 Tìm kiếm món..."
+                                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-800"
+                                value={searchTerm}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                            />
+                            <select
+                                className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:w-40 text-gray-800"
+                                value={statusFilter}
+                                onChange={(e: ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
+                            >
+                                <option value="all">Tất cả trạng thái</option>
+                                <option value="AVAILABLE">Còn hàng</option>
+                                <option value="OUT_OF_STOCK">Hết hàng</option>
+                                <option value="HIDDEN">Ẩn</option>
+                            </select>
+                        </div>
+
+                        {/* Category Filter */}
+                        <div>
+                            <div className="text-sm font-semibold text-gray-700 mb-2">📂 Lọc theo danh mục:</div>
+                            <div className="flex flex-wrap gap-2">
+                                {categories?.map((category: Category) => (
+                                    <label
+                                        key={category.id}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition ${
+                                            selectedCategories.includes(category.id)
+                                                ? "bg-amber-100 border-amber-600 text-amber-800"
+                                                : "bg-white border-gray-300 text-gray-700 hover:border-amber-400"
+                                        }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedCategories.includes(category.id)}
+                                            onChange={() => toggleCategory(category.id)}
+                                            className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                                        />
+                                        <span className="text-sm font-medium">{category.name}</span>
+                                        {category.foodCount !== undefined && (
+                                            <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-full">{category.foodCount}</span>
+                                        )}
+                                    </label>
+                                ))}
+
+                                {selectedCategories.length > 0 && (
+                                    <button
+                                        onClick={() => setSelectedCategories([])}
+                                        className="px-3 py-2 text-sm text-amber-600 hover:text-amber-800 font-medium underline"
+                                    >
+                                        Xóa bộ lọc
+                                    </button>
+                                )}
+                            </div>
+
+                            {categoriesError && <p className="text-red-500 text-xs mt-2">Lỗi tải danh mục. Vui lòng thử lại.</p>}
+                        </div>
                     </div>
                 </div>
 

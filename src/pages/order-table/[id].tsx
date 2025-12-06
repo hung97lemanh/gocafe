@@ -100,6 +100,7 @@ interface TableOrderPageProps {
 export default function TableOrderPage({ table, categories, toppings, error }: TableOrderPageProps) {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState<string>("all");
     const [cart, setCart] = useState<CartItem[]>([]);
     const [showCart, setShowCart] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER">("CASH");
@@ -122,9 +123,17 @@ export default function TableOrderPage({ table, categories, toppings, error }: T
         ? categories
               .map((category: any) => ({
                   ...category,
-                  foods: category.foods?.filter((food: any) => food && food.name && food.name.toLowerCase().includes(searchTerm.toLowerCase())) || []
+                  foods:
+                      category.foods?.filter((food: any) => {
+                          const matchesSearch = food && food.name && food.name.toLowerCase().includes(searchTerm.toLowerCase());
+                          return matchesSearch;
+                      }) || []
               }))
-              .filter((category: any) => category.foods && category.foods.length > 0)
+              .filter((category: any) => {
+                  const hasMatchingFoods = category.foods && category.foods.length > 0;
+                  const matchesCategory = categoryFilter === "all" || category.id.toString() === categoryFilter;
+                  return hasMatchingFoods && matchesCategory;
+              })
         : [];
 
     // Add item to cart
@@ -253,15 +262,17 @@ export default function TableOrderPage({ table, categories, toppings, error }: T
             <h1 className="text-center text-2xl font-bold my-5 text-amber-700">☕ Go Cafe</h1>
 
             {/* Header */}
-            <div className="bg-gradient-to-r from-amber-200 to-amber-400 p-4 rounded-lg flex justify-between items-center mb-4 shadow-md">
-                <div className="font-bold text-lg">☕ Go Cafe</div>
-                <div className="text-gray-700">Chào mừng quý khách 👋</div>
+            <div className="bg-gradient-to-rp-4 flex justify-between items-center mb-4">
+                <div className="flex items-center justify-between w-full">
+                    <Image src="/image/fish.png" alt="Fish" width={0} height={20} className="p-1" />
+                    <Image src="/image/logo-1.png" alt="Logo" width={100} height={100} className="p-1" />
+                    <Image src="/image/fish.png" alt="Fish" width={0} height={20} className="p-1" />
+                </div>
             </div>
 
             {/* Table info */}
-            <div className="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex justify-center items-center mb-4 p-3 bg-gray-50 rounded-lg">
                 <span className="font-bold text-amber-700">🪑 Bàn: {table.name}</span>
-                <span className="text-gray-600 text-sm">📋 Lịch sử gần nhất</span>
             </div>
 
             {/* Search bar */}
@@ -273,9 +284,13 @@ export default function TableOrderPage({ table, categories, toppings, error }: T
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <select className="p-3 border border-gray-300 rounded-lg">
-                    <option>Tất cả</option>
-                    <option>Còn hàng</option>
+                <select className="p-3 border border-gray-300 rounded-lg" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                    <option value="all">Tất cả</option>
+                    {categories?.map((category: any) => (
+                        <option key={category.id} value={category.id.toString()}>
+                            {category.name}
+                        </option>
+                    ))}
                 </select>
             </div>
 

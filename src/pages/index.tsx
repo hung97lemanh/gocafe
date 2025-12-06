@@ -36,12 +36,35 @@ const App = () => {
     const [currentPath, setCurrentPath] = useState("/"); // Represents the current URL path
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [categories, setCategories] = useState<any[]>([]);
+    const [menuError, setMenuError] = useState<string | null>(null);
+    const [isMenuLoading, setIsMenuLoading] = useState(true);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsLoading(false);
         }, 1000);
         return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                setIsMenuLoading(true);
+                const response = await fetch("/api/food-categories");
+                if (!response.ok) {
+                    throw new Error("Không thể tải dữ liệu menu");
+                }
+                const data = await response.json();
+                setCategories(data);
+            } catch (err: any) {
+                setMenuError(err.message || "Đã có lỗi xảy ra");
+            } finally {
+                setIsMenuLoading(false);
+            }
+        };
+
+        fetchCategories();
     }, []);
 
     const navigateTo = (path: any) => {
@@ -62,7 +85,7 @@ const App = () => {
     let PageComponent;
     switch (currentPath) {
         case "/menu":
-            PageComponent = MenuPage;
+            PageComponent = () => <MenuPage categories={categories} isLoading={isMenuLoading} error={menuError} />;
             break;
         case "/about":
             PageComponent = AboutPage;
@@ -75,7 +98,7 @@ const App = () => {
             break;
         case "/":
         default:
-            PageComponent = HomePage;
+            PageComponent = () => <HomePage categories={categories} isLoading={isMenuLoading} error={menuError} />;
             break;
     }
 
@@ -85,14 +108,14 @@ const App = () => {
             <nav className="bg-tan p-4 shadow-md sticky top-0 z-50">
                 <div className="container mx-auto flex justify-between items-center">
                     <div className="cursor-pointer" onClick={() => navigateTo("/")}>
-                        <img 
-                            src="/image/logov1.png" 
-                            alt="Go Cafe Logo" 
+                        <img
+                            src="/image/logov1.png"
+                            alt="Go Cafe Logo"
                             className="h-10"
                             onError={(e: any) => {
                                 e.target.onerror = null;
                                 e.target.src = "https://placehold.co/200x80/D2B48C/8B4513?text=Go+Cafe";
-                            }} 
+                            }}
                         />
                     </div>
                     {/* Desktop Navigation */}
@@ -200,7 +223,7 @@ const App = () => {
 };
 
 // Home Page Component
-const HomePage = () => (
+const HomePage = ({ categories, isLoading, error }: { categories: any[]; isLoading: boolean; error: string | null }) => (
     <section className="text-center py-12 px-4">
         <h1 className="text-5xl md:text-6xl font-serif text-saddleBrown mb-6 leading-tight">
             <span className="block italic">"Nơi thời gian chậm lại,</span>
@@ -224,52 +247,50 @@ const HomePage = () => (
             />
         </div>
 
-        {/* Featured Menu */}
+        {/* Featured Menu - Now showing full menu from API */}
         <h2 className="text-4xl font-serif text-saddleBrown mb-8">Menu Nổi Bật</h2>
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="bg-tan p-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-transform duration-300">
-                <img
-                    src="https://placehold.co/300x200/6F4E37/F5DEB3?text=C%C3%A0+Ph%C3%AA+S%E1%BB%AFa+%C4%90%C3%A1"
-                    alt="Cà Phê Sữa Đá"
-                    className="w-full h-48 object-cover rounded-md mb-4"
-                    onError={(e: any) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://placehold.co/300x200/6F4E37/F5DEB3?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh";
-                    }}
-                />
-                <h3 className="text-2xl font-semibold text-charcoalCoffee mb-2">Cà Phê Sữa Đá Đặc Biệt</h3>
-                <p className="text-sienna text-lg">Hương vị truyền thống Việt Nam, đậm đà khó quên.</p>
-                <p className="text-saddleBrown font-bold text-xl mt-3">45.000 VNĐ</p>
+
+        {isLoading ? (
+            <div className="flex justify-center items-center min-h-[400px]">
+                <p className="text-2xl text-charcoalCoffee animate-pulse">Đang tải menu...</p>
             </div>
-            <div className="bg-tan p-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-transform duration-300">
-                <img
-                    src="https://placehold.co/300x200/A0522D/F5DEB3?text=Tr%C3%A0+V%C3%A1i"
-                    alt="Trà Vải"
-                    className="w-full h-48 object-cover rounded-md mb-4"
-                    onError={(e: any) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://placehold.co/300x200/A0522D/F5DEB3?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh";
-                    }}
-                />
-                <h3 className="text-2xl font-semibold text-charcoalCoffee mb-2">Trà Vải Nhiệt Đới</h3>
-                <p className="text-sienna text-lg">Thức uống giải khát hoàn hảo cho ngày hè oi ả.</p>
-                <p className="text-saddleBrown font-bold text-xl mt-3">50.000 VNĐ</p>
+        ) : error ? (
+            <div className="flex justify-center items-center min-h-[400px]">
+                <p className="text-2xl text-red-600">{error}</p>
             </div>
-            <div className="bg-tan p-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-transform duration-300">
-                <img
-                    src="https://placehold.co/300x200/8B4513/F5DEB3?text=B%C3%A1nh+Tiramisu"
-                    alt="Bánh Tiramisu"
-                    className="w-full h-48 object-cover rounded-md mb-4"
-                    onError={(e: any) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://placehold.co/300x200/8B4513/F5DEB3?text=L%E1%BB%97i+t%E1%BA%A3i+%E1%BA%A3nh";
-                    }}
-                />
-                <h3 className="text-2xl font-semibold text-charcoalCoffee mb-2">Bánh Tiramisu Ý</h3>
-                <p className="text-sienna text-lg">Món tráng miệng kinh điển, mềm mịn và thơm lừng.</p>
-                <p className="text-saddleBrown font-bold text-xl mt-3">65.000 VNĐ</p>
+        ) : (
+            <div className="mb-12">
+                {categories
+                    .filter((category) => category.foods && category.foods.length > 0)
+                    .map((category) => (
+                        <div key={category.name} className="mb-12">
+                            <h3 className="text-3xl font-semibold text-charcoalCoffee mb-6 border-b-2 border-sienna pb-3 text-center">
+                                {category.name}
+                            </h3>
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                                {category.foods.map((item: any) => (
+                                    <div
+                                        key={item.name}
+                                        className="bg-tan p-6 rounded-xl shadow-lg flex flex-col items-center text-center hover:shadow-xl transform hover:-translate-y-2 transition-transform duration-300"
+                                    >
+                                        <img
+                                            src={item.image}
+                                            alt={item.name}
+                                            className="w-32 h-32 object-cover rounded-full mb-4 border-2 border-sienna"
+                                            onError={(e: any) => {
+                                                e.target.onerror = null;
+                                                e.target.src = "https://placehold.co/150x150/D2B48C/6F4E37?text=L%E1%BB%97i+%E1%BA%A3nh";
+                                            }}
+                                        />
+                                        <h4 className="text-2xl font-bold text-saddleBrown mb-2">{item.name}</h4>
+                                        <p className="text-coffee text-xl font-semibold">{item.price}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
             </div>
-        </div>
+        )}
 
         {/* Promotions */}
         <div className="bg-sienna p-8 rounded-xl shadow-xl text-wheat">
@@ -282,71 +303,59 @@ const HomePage = () => (
 );
 
 // Menu Page Component
-const MenuPage = () => {
-    const categories = [
-        {
-            name: "Cà phê",
-            items: [
-                { name: "Espresso", price: "35.000 VNĐ", image: "https://placehold.co/150x150/6F4E37/F5DEB3?text=Espresso" },
-                { name: "Americano", price: "40.000 VNĐ", image: "https://placehold.co/150x150/A0522D/F5DEB3?text=Americano" },
-                { name: "Latte", price: "50.000 VNĐ", image: "https://placehold.co/150x150/8B4513/F5DEB3?text=Latte" },
-                { name: "Cappuccino", price: "50.000 VNĐ", image: "https://placehold.co/150x150/D2B48C/6F4E37?text=Cappuccino" },
-                { name: "Cà phê sữa đá", price: "45.000 VNĐ", image: "https://placehold.co/150x150/6F4E37/F5DEB3?text=Ca+Phe+Sua" }
-            ]
-        },
-        {
-            name: "Trà",
-            items: [
-                { name: "Trà Đào Cam Sả", price: "55.000 VNĐ", image: "https://placehold.co/150x150/A0522D/F5DEB3?text=Tra+Dao" },
-                { name: "Trà Vải Nhiệt Đới", price: "50.000 VNĐ", image: "https://placehold.co/150x150/8B4513/F5DEB3?text=Tra+Vai" },
-                { name: "Trà Atiso", price: "45.000 VNĐ", image: "https://placehold.co/150x150/D2B48C/6F4E37?text=Tra+Atiso" }
-            ]
-        },
-        {
-            name: "Bánh ngọt",
-            items: [
-                { name: "Tiramisu", price: "65.000 VNĐ", image: "https://placehold.co/150x150/6F4E37/F5DEB3?text=Tiramisu" },
-                { name: "Bánh Mousse Chanh Leo", price: "60.000 VNĐ", image: "https://placehold.co/150x150/A0522D/F5DEB3?text=Mousse" },
-                { name: "Red Velvet", price: "60.000 VNĐ", image: "https://placehold.co/150x150/8B4513/F5DEB3?text=Red+Velvet" }
-            ]
-        },
-        {
-            name: "Đồ uống lạnh khác",
-            items: [
-                { name: "Soda Việt Quất", price: "55.000 VNĐ", image: "https://placehold.co/150x150/D2B48C/6F4E37?text=Soda" },
-                { name: "Nước Ép Cam Tươi", price: "45.000 VNĐ", image: "https://placehold.co/150x150/6F4E37/F5DEB3?text=Nuoc+Ep+Cam" }
-            ]
-        }
-    ];
+const MenuPage = ({ categories, isLoading, error }: { categories: any[]; isLoading: boolean; error: string | null }) => {
+    if (isLoading) {
+        return (
+            <section className="py-12 px-4">
+                <h1 className="text-5xl font-serif text-saddleBrown text-center mb-10">Menu Đầy Đủ</h1>
+                <div className="flex justify-center items-center min-h-[400px]">
+                    <p className="text-2xl text-charcoalCoffee animate-pulse">Đang tải menu...</p>
+                </div>
+            </section>
+        );
+    }
+
+    if (error) {
+        return (
+            <section className="py-12 px-4">
+                <h1 className="text-5xl font-serif text-saddleBrown text-center mb-10">Menu Đầy Đủ</h1>
+                <div className="flex justify-center items-center min-h-[400px]">
+                    <p className="text-2xl text-red-600">{error}</p>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="py-12 px-4">
             <h1 className="text-5xl font-serif text-saddleBrown text-center mb-10">Menu Đầy Đủ</h1>
-            {categories.map((category) => (
-                <div key={category.name} className="mb-12">
-                    <h2 className="text-4xl font-semibold text-charcoalCoffee mb-6 border-b-2 border-sienna pb-3 text-center">{category.name}</h2>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                        {category.items.map((item) => (
-                            <div
-                                key={item.name}
-                                className="bg-tan p-6 rounded-xl shadow-lg flex flex-col items-center text-center hover:shadow-xl transform hover:-translate-y-2 transition-transform duration-300"
-                            >
-                                <img
-                                    src={item.image}
-                                    alt={item.name}
-                                    className="w-32 h-32 object-cover rounded-full mb-4 border-2 border-sienna"
-                                    onError={(e: any) => {
-                                        e.target.onerror = null;
-                                        e.target.src = "https://placehold.co/150x150/D2B48C/6F4E37?text=L%E1%BB%97i+%E1%BA%A3nh";
-                                    }}
-                                />
-                                <h3 className="text-2xl font-bold text-saddleBrown mb-2">{item.name}</h3>
-                                <p className="text-coffee text-xl font-semibold">{item.price}</p>
-                            </div>
-                        ))}
+            {categories
+                .filter((category) => category.foods && category.foods.length > 0)
+                .map((category) => (
+                    <div key={category.name} className="mb-12">
+                        <h2 className="text-4xl font-semibold text-charcoalCoffee mb-6 border-b-2 border-sienna pb-3 text-center">{category.name}</h2>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                            {category.foods.map((item: any) => (
+                                <div
+                                    key={item.name}
+                                    className="bg-tan p-6 rounded-xl shadow-lg flex flex-col items-center text-center hover:shadow-xl transform hover:-translate-y-2 transition-transform duration-300"
+                                >
+                                    <img
+                                        src={item.image}
+                                        alt={item.name}
+                                        className="w-32 h-32 object-cover rounded-full mb-4 border-2 border-sienna"
+                                        onError={(e: any) => {
+                                            e.target.onerror = null;
+                                            e.target.src = "https://placehold.co/150x150/D2B48C/6F4E37?text=L%E1%BB%97i+%E1%BA%A3nh";
+                                        }}
+                                    />
+                                    <h3 className="text-2xl font-bold text-saddleBrown mb-2">{item.name}</h3>
+                                    <p className="text-coffee text-xl font-semibold">{item.price}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            ))}
+                ))}
         </section>
     );
 };

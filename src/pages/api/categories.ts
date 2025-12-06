@@ -172,3 +172,40 @@ async function handleDelete(req: NextApiRequest, res: NextApiResponse) {
         return res.status(500).json({ message: "Error deleting category", error });
     }
 }
+
+// Sample data for categories
+const sampleCategories = [
+    {
+        name: "Cà phê",
+        items: [
+            { name: "Espresso", price: "35.000 VNĐ", image: "https://placehold.co/150x150/6F4E37/F5DEB3?text=Espresso" },
+            { name: "Americano", price: "40.000 VNĐ", image: "https://placehold.co/150x150/A0522D/F5DEB3?text=Americano" },
+            { name: "Latte", price: "50.000 VNĐ", image: "https://placehold.co/150x150/8B4513/F5DEB3?text=Latte" },
+            { name: "Cappuccino", price: "50.000 VNĐ", image: "https://placehold.co/150x150/D2B48C/6F4E37?text=Cappuccino" },
+            { name: "Cà phê sữa đá", price: "45.000 VNĐ", image: "https://placehold.co/150x150/6F4E37/F5DEB3?text=Ca+Phe+Sua" }
+        ]
+    },
+    {
+        name: "Trà",
+        items: [
+            { name: "Trà Đào Cam Sả", price: "55.000 VNĐ", image: "https://placehold.co/150x150/A0522D/F5DEB3?text=Tra+Dao" },
+            { name: "Trà Vải Nhiệt Đới", price: "50.000 VNĐ", image: "https://placehold.co/150x150/8B4513/F5DEB3?text=Tra+Vai" },
+            { name: "Trà Atiso", price: "45.000 VNĐ", image: "https://placehold.co/150x150/D2B48C/6F4E37?text=Tra+Atiso" }
+        ]
+    },
+    {
+        name: "Bánh ngọt",
+        items: [
+            { name: "Tiramisu", price: "65.000 VNĐ", image: "https://placehold.co/150x150/6F4E37/F5DEB3?text=Tiramisu" },
+            { name: "Bánh Mousse Chanh Leo", price: "60.000 VNĐ", image: "https://placehold.co/150x150/A0522D/F5DEB3?text=Mousse" },
+            { name: "Red Velvet", price: "60.000 VNĐ", image: "https://placehold.co/150x150/8B4513/F5DEB3?text=Red+Velvet" }
+        ]
+    },
+    {
+        name: "Đồ uống lạnh khác",
+        items: [
+            { name: "Soda Việt Quất", price: "55.000 VNĐ", image: "https://placehold.co/150x150/D2B48C/6F4E37?text=Soda" },
+            { name: "Nước Ép Cam Tươi", price: "45.000 VNĐ", image: "https://placehold.co/150x150/6F4E37/F5DEB3?text=Nuoc+Ep+Cam" }
+        ]
+    }
+];
