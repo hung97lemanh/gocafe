@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     // GET - Fetch all tables or a specific table
-    if (req.method === "GET") {
+    if (req.method === "GET" || req.method === "OPTIONS") {
         const { id } = req.query;
 
         if (id) {
@@ -165,9 +165,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(500).json({ error: "Failed to delete table" });
         }
     }
-    if (req.method === "OPTIONS") {
-        return res.status(200).end();
-    }
+    // if (req.method === "OPTIONS") {
+    //     return res.status(200).end();
+    // }
 
     // Method not allowed
     return res.status(405).json({ error: "Method not allowed" });
