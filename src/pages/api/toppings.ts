@@ -15,6 +15,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return handlePut(req, res);
         case "DELETE":
             return handleDelete(req, res);
+        case "OPTIONS":
+            return res.status(200).end();
         default:
             res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
             return res.status(405).end(`Method ${method} Not Allowed`);

@@ -12,6 +12,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return await createOrder(req, res);
             case "PATCH":
                 return await updateOrderStatus(req, res);
+            case "OPTIONS":
+                return res.status(200).end();
             default:
                 return res.status(405).json({ message: "Method not allowed" });
         }

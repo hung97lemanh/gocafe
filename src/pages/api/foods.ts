@@ -79,6 +79,8 @@ export default async function handler(req: NextApiRequestWithFile, res: NextApiR
                 return await updateFood(req, res);
             case "DELETE":
                 return await deleteFood(req, res);
+            case "OPTIONS":
+                return res.status(200).end();
             default:
                 return res.status(405).json({ message: "Method not allowed" });
         }

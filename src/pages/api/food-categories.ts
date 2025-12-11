@@ -5,6 +5,9 @@ const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "GET") {
+        if (req.method === "OPTIONS") {
+            return res.status(200).end();
+        }
         res.setHeader("Allow", ["GET"]);
         return res.status(405).end(`Method ${req.method} Not Allowed`);
     }
