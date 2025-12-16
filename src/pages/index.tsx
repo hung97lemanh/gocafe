@@ -274,7 +274,7 @@ const HomePage = ({ categories, isLoading, error }: { categories: any[]; isLoadi
                                         className="bg-tan p-6 rounded-xl shadow-lg flex flex-col items-center text-center hover:shadow-xl transform hover:-translate-y-2 transition-transform duration-300"
                                     >
                                         <img
-                                            src={item.image}
+                                            src={item.imageUrl}
                                             alt={item.name}
                                             className="w-32 h-32 object-cover rounded-full mb-4 border-2 border-sienna"
                                             onError={(e: any) => {
@@ -341,13 +341,9 @@ const MenuPage = ({ categories, isLoading, error }: { categories: any[]; isLoadi
                                     className="bg-tan p-6 rounded-xl shadow-lg flex flex-col items-center text-center hover:shadow-xl transform hover:-translate-y-2 transition-transform duration-300"
                                 >
                                     <img
-                                        src={item.image}
-                                        alt={item.name}
+                                        src={item.imageUrl}
+                                        alt={"item.name"}
                                         className="w-32 h-32 object-cover rounded-full mb-4 border-2 border-sienna"
-                                        onError={(e: any) => {
-                                            e.target.onerror = null;
-                                            e.target.src = "https://placehold.co/150x150/D2B48C/6F4E37?text=L%E1%BB%97i+%E1%BA%A3nh";
-                                        }}
                                     />
                                     <h3 className="text-2xl font-bold text-saddleBrown mb-2">{item.name}</h3>
                                     <p className="text-coffee text-xl font-semibold">{item.price}</p>
